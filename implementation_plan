@@ -1,0 +1,92 @@
+Schedule A: Project Description
+The following is the project description provided in the Developer’s notes and forms part of this agreement.
+Get a description of the project
+What is the timeline – 1 Month until launch.
+On what technology is the current page running on - Currently running on Wordpress. This is -unstable and unreliable.
+Assist the doctor by autocompleting
+Languages: English + Arabic.
+User types and their Functions
+There will be three types of users with special rights, Doctor and Pharmacist.
+Doctor:
+Doctors can write prescriptions
+Prescriptions are written based on each individual drug prescribed [Drug + Dose + Amount (for example: of pills)]
+Doctors can view all patient records
+Prescription Schema will be given by the professional (Ream).
+Doctors can print the prescription on paper.
+Doctor is assisted by autocomplete when typing in a drug. 
+A drug list will be provided, the doctor cannot type anything. 
+Pharmacist:
+Can view prescriptions
+Can not view private patient information. This is only for the Doctors to view.
+Can give prescriptions
+When a drug is given, the pharmacist inputs their Pharmacist ID for tracking, and inputs what part of the prescription they gave. This is important because if the pharmacist only gives part of the prescription, the missing prescription keeps it active until all drugs are given.
+Admin:
+Can view all registered accounts.
+Can view all prescriptions given, can also view all the data related.
+Can view in a limited manner the patient records. Can not however view the details. (We should later discuss this feature with the pharmacy professional)
+Can send invite links to register a Doctor.
+Can send invite links to register a Pharmacist.
+
+
+Public: 
+Can view the portal
+Portal includes a header with 5 sections: 
+Portals
+Journals
+Medical Library
+Authorities
+Events
+Have these as 5 separate navigable pages, not just tab. For example /portals, /journals etc. 
+Contents for each one of these will be provided later. 
+Home page includes organized links, press releases, General articles, Medical Advice videos. At the bottom an organized “LEARN MORE ABOUT HOW AORTAIQ IS MAKING A DIFFERENCE" and a “RESEARCH”. 
+Take inspiration from a medical journal website design for this webpage. 
+Logos and images will be provided later. 
+Resources I need:
+Access to the portals, via API.
+The books in the Medical Library – In PDF format.
+All materials to be displayed in sections like: [Researchers, Videos in the “Medical Advice Videos,”, a list of all the articles in the “General articles” section, a list of the blogs/articles for the “Press Releases” section.]
+The Logo
+The Images to use. 
+Technologies used to develop the page:
+Frontend: Vite + React + TypeScript, Tailwind, React Router, TanStack Query, React Hook Form
+Backend: Node + Express + Typescript
+Database: PostgreSQL
+Validation: Zod
+Authentication: Firebase Authentication + email allowlist for the Admin.
+File Storage: Cloudflare R2
+Hosting: Render
+
+3. Additional smart features
+For a more advanced system, I would add:
+Drug Safety Alerts: Check drug interactions, allergies, pregnancy risks and renal dosing.
+Patient Timeline: Show medical visits, prescriptions, laboratory results and imaging chronologically.
+Laboratory Trends: Display how results such as HbA1c, creatinine and hemoglobin change over time.
+Clinical Guidelines: Allow doctors to access evidence-based guidelines directly.
+Patient QR Code: Securely retrieve a patient’s record with appropriate authorization.
+Section
+Information
+1. Patient Information
+Name, age, gender, patient ID, phone, emergency contact
+2. Medical History
+Previous diseases, chronic conditions, surgeries, family history
+3. Medications
+Current medications, doses, frequency, medication history
+4. Allergies
+Drug allergies, food allergies, reaction severity
+5. Laboratory Tests
+Blood tests, urine tests, hormones, test results, PDF reports
+6. Radiology
+X-ray, CT scan, MRI, ultrasound, images and radiology reports
+7. E-Prescription
+Prescribed medicines, dosage, duration, prescribing doctor
+8. Doctor Visits
+Visit date, symptoms, diagnosis, clinical notes, treatment plan
+9. Vital Signs
+Blood pressure, pulse, temperature, weight, height, oxygen saturation
+10. Medical Documents
+Discharge summaries, referrals, medical certificates, uploaded files
+
+
+
+
+I need to create the following accounts:

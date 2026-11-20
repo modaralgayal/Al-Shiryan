@@ -1,0 +1,19 @@
+/* Print styles for paper prescriptions (contract: "Doctor ... can print the
+   prescription on paper"). Mark printable content with .print-area. */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .print-area,
+  .print-area * {
+    visibility: visible;
+  }
+  .print-area {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+  }
+  .no-print {
+    display: none !important;
+  }
+}

@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: aorta-iq-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: aorta
+      POSTGRES_PASSWORD: aorta_local_dev
+      POSTGRES_DB: aorta_iq
+    ports:
+      - "5432:5432"
+    volumes:
+      - aorta-pg-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aorta -d aorta_iq"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  aorta-pg-data:

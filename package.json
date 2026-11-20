@@ -1,0 +1,20 @@
+{
+  "name": "aorta-iq",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AORTAIQ medical portal — monorepo (frontend + backend + shared schemas)",
+  "packageManager": "pnpm@9.12.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "pnpm -r --parallel dev",
+    "build": "pnpm -r --if-present build",
+    "typecheck": "pnpm -r --if-present typecheck",
+    "lint": "pnpm -r --if-present lint",
+    "test": "pnpm --filter @aorta-iq/backend test && pnpm --filter @aorta-iq/frontend test",
+    "db:generate": "pnpm --filter @aorta-iq/backend db:generate",
+    "db:migrate": "pnpm --filter @aorta-iq/backend db:migrate",
+    "db:danger": "pnpm --filter @aorta-iq/backend db:danger"
+  }
+}
