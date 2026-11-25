@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import type { Prescription } from '@aorta-iq/shared';
@@ -10,10 +10,21 @@ export default function PharmacistFulfillment() {
   const { user } = useAuth();
   const qc = useQueryClient();
   const [selected, setSelected] = useState<Record<string, boolean>>({});
+  const [search, setSearch] = useState('');
+  const [debounced, setDebounced] = useState('');
+
+  // Debounce the search box so we don't refetch on every keystroke.
+  useEffect(() => {
+    const id = setTimeout(() => setDebounced(search.trim()), 300);
+    return () => clearTimeout(id);
+  }, [search]);
 
   const list = useQuery({
-    queryKey: ['fulfill'],
-    queryFn: () => api.get<{ prescriptions: Prescription[] }>('/api/pharmacist/prescriptions'),
+    queryKey: ['fulfill', debounced],
+    queryFn: () =>
+      api.get<{ prescriptions: Prescription[] }>(
+        `/api/pharmacist/prescriptions${debounced ? `?q=${encodeURIComponent(debounced)}` : ''}`,
+      ),
   });
 
   const dispense = useMutation({
@@ -39,17 +50,34 @@ export default function PharmacistFulfillment() {
           </>
         )}
       </div>
-      {rxs.length === 0 && <p className="text-slate-500">{t('portalSubtitle')}</p>}
+
+      <input
+        type="search"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        placeholder={t('searchByName')}
+        className="mb-4 w-full rounded border p-2"
+      />
+
+      {rxs.length === 0 && (
+        <p className="text-slate-500">{debounced ? t('noResults') : t('portalSubtitle')}</p>
+      )}
       <div className="space-y-4">
         {rxs.map((rx) => {
           const pending = rx.items.filter((it) => it.status === 'pending');
           const chosen = pending.filter((it) => selected[it.id]);
           return (
             <div key={rx.id} className="rounded border p-4">
-              <div className="mb-2 flex items-center justify-between">
-                <span className="font-medium">{t('prescriptionCode')}: {rx.prescriptionCode ?? rx.id}</span>
-                <span className="text-sm text-slate-500">{t('status')}: {rx.status}</span>
+              <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                <span className="font-medium">
+                  {rx.patientName ?? t('unknownPatient')}
+                </span>
+                <span className="text-sm text-slate-500">
+                  {t('prescriptionCode')}: {rx.prescriptionCode ?? rx.id} · {t('status')}: {rx.status}
+                </span>
               </div>
+              {/* Limited view: only the drug lines needed to dispense. No notes, allergies,
+                  contact, or signature are exposed to the pharmacist. */}
               <ul className="space-y-1 text-sm">
                 {pending.map((it) => (
                   <li key={it.id} className="flex items-center gap-2">
@@ -58,8 +86,10 @@ export default function PharmacistFulfillment() {
                       checked={!!selected[it.id]}
                       onChange={(e) => setSelected((s) => ({ ...s, [it.id]: e.target.checked }))}
                     />
-                    <span>{it.drugId}</span>
-                    <span className="text-slate-500">{it.dose} × {it.amount}</span>
+                    <span>{it.drugName ?? it.drugId}</span>
+                    <span className="text-slate-500">
+                      {it.dose} × {it.amount}
+                    </span>
                   </li>
                 ))}
               </ul>

@@ -1,6 +1,6 @@
 import { db } from '../../db/client';
-import { prescriptions, prescriptionItems, drugs, users } from '../../db/schema';
-import { eq, and, isNull, desc, inArray, or } from 'drizzle-orm';
+import { prescriptions, prescriptionItems, drugs, users, patients } from '../../db/schema';
+import { eq, and, isNull, desc, inArray, or, ilike } from 'drizzle-orm';
 import { audit } from '../../services/auditLog';
 import type { PrescriptionCreate, PrescriptionRevise, Prescription, Role } from '@aorta-iq/shared';
 import { computePrescriptionStatus } from '../pharmacist/service';
@@ -19,7 +19,12 @@ export function drugsAccountedFor(found: { id: string }[], ids: string[]): boole
   return requested.size === foundIds.size && ids.every((id) => foundIds.has(id));
 }
 
-export function serialize(rx: typeof prescriptions.$inferSelect, items: typeof prescriptionItems.$inferSelect[], role: Role): Prescription {
+export function serialize(
+  rx: typeof prescriptions.$inferSelect,
+  items: (typeof prescriptionItems.$inferSelect & { drugName?: string | null })[],
+  role: Role,
+  patientName?: string | null,
+): Prescription {
   // Admins get an oversight-only view: the prescriber's identity (name + ID) plus
   // the patient pointer and status. No clinical PHI (drugs, notes, allergies,
   // instructions, contact, signature).
@@ -30,6 +35,9 @@ export function serialize(rx: typeof prescriptions.$inferSelect, items: typeof p
     patientId: rx.patientId,
     doctorId: rx.doctorId,
     status: rx.status,
+    // Patient name only — the minimum needed to identify the person at the counter.
+    // No other patient PHI is ever exposed to the pharmacist.
+    patientName: patientName ?? null,
     notes: limited ? null : rx.notes,
     // Prescriber identity is shown to admins (it's who signed it, not patient PHI).
     doctorFullName: rx.doctorFullName,
@@ -50,6 +58,8 @@ export function serialize(rx: typeof prescriptions.$inferSelect, items: typeof p
       status: it.status,
       givenBy: it.givenBy,
       givenAt: it.givenAt ? it.givenAt.toISOString() : null,
+      // Drug name joined for the pharmacist view; falls back to the id if missing.
+      drugName: it.drugName ?? null,
     })),
   };
 }
@@ -128,21 +138,45 @@ export async function listPrescriptions(viewerRole: Role, _viewerId: string, pat
   return out;
 }
 
-export async function listFulfillablePrescriptions(): Promise<Prescription[]> {
+/**
+ * Prescriptions the pharmacist can still fulfill: status `active` or `partial`
+ * (never `completed` or `cancelled`). A `completed` prescription has been fully
+ * dispensed and therefore drops out of this list — but it is NOT deleted, so it
+ * remains in the patient's history (S3) and is still auditable.
+ *
+ * `patientNameQuery` does a case-insensitive prefix/contains search on the
+ * patient's name so the pharmacist can find a prescription by the person's name
+ * without ever loading the patient record (PHI stays out of the pharmacist's view).
+ */
+export async function listFulfillablePrescriptions(patientNameQuery?: string): Promise<Prescription[]> {
+  const conds = [
+    or(eq(prescriptions.status, 'active'), eq(prescriptions.status, 'partial')),
+    isNull(prescriptions.deletedAt),
+  ];
+  if (patientNameQuery) conds.push(ilike(patients.name, `%${patientNameQuery}%`));
+
   const rows = await db
-    .select()
+    .select({ rx: prescriptions, patientName: patients.name })
     .from(prescriptions)
-    .where(
-      and(
-        or(eq(prescriptions.status, 'active'), eq(prescriptions.status, 'partial')),
-        isNull(prescriptions.deletedAt),
-      ),
-    )
+    .leftJoin(patients, eq(prescriptions.patientId, patients.id))
+    .where(and(...conds))
     .orderBy(desc(prescriptions.issuedAt));
+
   const out: Prescription[] = [];
-  for (const rx of rows) {
-    const items = await db.select().from(prescriptionItems).where(eq(prescriptionItems.prescriptionId, rx.id));
-    out.push(serialize(rx, items, 'pharmacist'));
+  for (const { rx, patientName } of rows) {
+    const itemRows = await db
+      .select({ item: prescriptionItems, drugName: drugs.name })
+      .from(prescriptionItems)
+      .leftJoin(drugs, eq(prescriptionItems.drugId, drugs.id))
+      .where(eq(prescriptionItems.prescriptionId, rx.id));
+    out.push(
+      serialize(
+        rx,
+        itemRows.map((r) => ({ ...r.item, drugName: r.drugName })),
+        'pharmacist',
+        patientName,
+      ),
+    );
   }
   return out;
 }

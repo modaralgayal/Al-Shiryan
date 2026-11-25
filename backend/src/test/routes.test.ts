@@ -51,6 +51,7 @@ vi.mock('../services/auditLog', () => ({ audit: vi.fn(async () => {}) }));
 
 import { createApp } from '../core/bootstrap';
 import { audit } from '../services/auditLog';
+import { listFulfillablePrescriptions } from '../domains/prescriptions/service';
 
 const app = createApp();
 const UID = '3f1c2b3a-1a2b-4c3d-8e5f-1234567890ab';
@@ -117,5 +118,13 @@ describe('S2 route guards & flow', () => {
       undefined,
       expect.anything(),
     );
+  });
+
+  it('forwards patient-name search (?q) to the fulfillable list', async () => {
+    const res = await request(app)
+      .get('/api/pharmacist/prescriptions?q=Jane')
+      .set('x-user', user('pharmacist'));
+    expect(res.status).toBe(200);
+    expect(listFulfillablePrescriptions).toHaveBeenCalledWith('Jane');
   });
 });

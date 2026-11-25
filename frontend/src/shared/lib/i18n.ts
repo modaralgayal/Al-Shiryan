@@ -95,6 +95,9 @@ const resources = {
       renewing: 'Renewing',
       updating: 'Updating',
       writingNew: 'New Prescription',
+      searchByName: 'Search by patient name',
+      noResults: 'No prescriptions found.',
+      unknownPatient: 'Patient',
     },
   },
   ar: {
@@ -188,6 +191,9 @@ const resources = {
       renewing: 'جارٍ التجديد',
       updating: 'جارٍ التحديث',
       writingNew: 'وصفة جديدة',
+      searchByName: 'ابحث باسم المريض',
+      noResults: 'لا توجد وصفات.',
+      unknownPatient: 'مريض',
     },
   },
 };

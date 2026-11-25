@@ -71,5 +71,16 @@ describe('serialize — role-aware PHI stripping', () => {
     expect(out.electronicSignature).toBeNull();
     expect(out.doctorFullName).toBe('Dr X');
   });
+
+  it('includes patientName and item drugName for the pharmacist fulfillable view', () => {
+    const out = serialize(
+      { ...rx, patientId: 'p1' } as any,
+      [{ ...items[0], drugName: 'Paracetamol' } as any],
+      'pharmacist',
+      'Jane Doe',
+    );
+    expect(out.patientName).toBe('Jane Doe');
+    expect(out.items[0]?.drugName).toBe('Paracetamol');
+  });
 });
 

@@ -32,6 +32,8 @@ export const prescriptionItemSchema = prescriptionItemInputSchema.extend({
   status: prescriptionItemStatusSchema,
   givenBy: z.string().uuid().nullable(),
   givenAt: z.string().nullable(),
+  // Populated only by views that join the drug (e.g. pharmacist fulfillable list).
+  drugName: z.string().nullable().optional(),
 });
 export type PrescriptionItem = z.infer<typeof prescriptionItemSchema>;
 
@@ -49,6 +51,9 @@ export const prescriptionSchema = z.object({
   medicationInstructions: z.string().nullable(),
   electronicSignature: z.string().nullable(), // confidential, doctor-only
   doctorLicenseId: z.string().nullable().optional(),
+  // Patient name only — no other patient PHI. Shown on the pharmacist fulfillable
+  // list so the pharmacist can identify the right person without seeing the record.
+  patientName: z.string().nullable().optional(),
   issuedAt: z.string(),
   items: z.array(prescriptionItemSchema),
 });
