@@ -6,6 +6,7 @@ import {
   integer,
   jsonb,
   timestamp,
+  numeric,
 } from 'drizzle-orm/pg-core';
 import { z } from 'zod';
 import { patientCreateSchema } from '@aorta-iq/shared';
@@ -45,6 +46,12 @@ export const users = pgTable('users', {
   email: text('email').notNull(),
   role: roleEnum('role').notNull(),
   fullName: text('full_name').notNull().default(''),
+  // Professional IDs the clinician self-assigns at registration. They are captured
+  // on every prescription / dispense so the prescription carries the prescriber's
+  // "signature" and cannot be altered from the client (the backend re-derives them
+  // from the authenticated user). Nullable because admins don't have one.
+  doctorId: text('doctor_id'),
+  pharmacistId: text('pharmacist_id'),
   status: text('status').notNull().default('invited'),
   invitedBy: uuid('invited_by'),
   ...lifecycle,
@@ -69,6 +76,9 @@ export const patients = pgTable('patients', {
   gender: text('gender').notNull(),
   phone: text('phone').notNull(),
   emergencyContact: text('emergency_contact').notNull(),
+  dateOfBirth: text('date_of_birth'),
+  idNumber: text('id_number'),
+  weightKg: numeric('weight_kg').$type<number>(),
   sections: jsonb('sections').$type<PatientSections>(),
   createdBy: uuid('created_by').notNull(),
   ...lifecycle,
@@ -84,6 +94,7 @@ export const drugs = pgTable('drugs', {
 
 export const prescriptions = pgTable('prescriptions', {
   id: uuid('id').primaryKey().defaultRandom(),
+  prescriptionCode: text('prescription_code'),
   patientId: uuid('patient_id')
     .notNull()
     .references(() => patients.id, { onDelete: 'restrict' }),
@@ -92,6 +103,15 @@ export const prescriptions = pgTable('prescriptions', {
     .references(() => users.id, { onDelete: 'restrict' }),
   status: prescriptionStatusEnum('status').notNull().default('active'),
   notes: text('notes'),
+  doctorFullName: text('doctor_full_name'),
+  hospitalName: text('hospital_name'),
+  doctorContactNumber: text('doctor_contact_number'),
+  drugAllergies: text('drug_allergies'),
+  medicationInstructions: text('medication_instructions'),
+  electronicSignature: text('electronic_signature'), // confidential, doctor-only
+  // Professional doctor ID captured at issue (re-derived server-side from the
+  // authenticated user, so a prescription always carries the prescriber's identity).
+  doctorLicenseId: text('doctor_license_id'),
   issuedAt: timestamp('issued_at', { withTimezone: true }).notNull().defaultNow(),
   ...lifecycle,
 });
@@ -120,6 +140,8 @@ export const pharmacistDispenses = pgTable('pharmacist_dispenses', {
   pharmacistId: uuid('pharmacist_id')
     .notNull()
     .references(() => users.id, { onDelete: 'restrict' }),
+  // Professional pharmacist ID captured at dispense (re-derived server-side).
+  pharmacistLicenseId: text('pharmacist_license_id'),
   quantityGiven: integer('quantity_given').notNull(),
   ts: timestamp('ts', { withTimezone: true }).notNull().defaultNow(),
   ...lifecycle,

@@ -15,6 +15,9 @@ export const userSchema = z.object({
   fullName: z.string(),
   status: z.enum(['invited', 'active', 'disabled']),
   invitedBy: z.string().uuid().nullable(),
+  // Professional IDs self-assigned at registration (doctor / pharmacist only).
+  doctorId: z.string().nullable(),
+  pharmacistId: z.string().nullable(),
   createdAt: z.string(),
 });
 export type User = z.infer<typeof userSchema>;

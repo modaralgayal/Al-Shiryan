@@ -8,6 +8,10 @@ export const patientBaseSchema = z.object({
   patientId: z.string().min(1), // medical record number
   phone: z.string().min(1),
   emergencyContact: z.string().min(1),
+  // Real e-prescription form fields (identity section).
+  dateOfBirth: z.string().optional(), // ISO date; may be unknown
+  idNumber: z.string().optional(), // national ID / equivalent
+  weightKg: z.number().positive().max(500).optional(),
 });
 
 // Section 4 — Allergies
@@ -91,6 +95,7 @@ export const patientCreateSchema = patientBaseSchema.extend({
   visits: z.array(visitSchema).default([]),
   documents: z.array(documentSchema).default([]),
 });
+export type PatientCreate = z.infer<typeof patientCreateSchema>;
 
 export const patientSchema = patientCreateSchema.extend({
   id: z.string().uuid(),
@@ -98,3 +103,14 @@ export const patientSchema = patientCreateSchema.extend({
   createdBy: z.string().uuid(),
 });
 export type Patient = z.infer<typeof patientSchema>;
+
+/** PATCH body — every field optional. */
+export const patientUpdateSchema = patientCreateSchema.partial();
+export type PatientUpdate = z.infer<typeof patientUpdateSchema>;
+
+/** List query — optional free-text search + page. */
+export const patientListQuerySchema = z.object({
+  q: z.string().min(1).optional(),
+  page: z.coerce.number().int().nonnegative().default(1),
+});
+export type PatientListQuery = z.infer<typeof patientListQuerySchema>;

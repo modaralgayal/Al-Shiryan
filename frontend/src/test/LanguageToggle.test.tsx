@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { I18nextProvider } from 'react-i18next';
-import i18n from '../lib/i18n';
-import { LanguageToggle } from '../components/LanguageToggle';
+import i18n from '../shared/lib/i18n';
+import { LanguageToggle } from '../shared/components/LanguageToggle';
 
 describe('LanguageToggle (i18n + RTL)', () => {
   it('switches English -> Arabic', () => {

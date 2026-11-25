@@ -1,0 +1,1 @@
+export { pharmacistRouter } from './route';

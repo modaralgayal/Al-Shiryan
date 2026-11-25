@@ -1,0 +1,1 @@
+export { patientsRouter } from './route';

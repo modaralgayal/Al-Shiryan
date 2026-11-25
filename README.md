@@ -10,10 +10,32 @@ journal-style site. Built from the client contract (see `implementation_plan`).
 ## Monorepo layout
 
 ```
-packages/shared   # Zod schemas + inferred types (single source of truth)
-backend/          # Express API
-frontend/         # React SPA
+packages/shared   # Zod schemas + inferred types (single source of truth / contract)
+backend/          # Express API  (core/ + domains/ modular monolith — see below)
+frontend/         # React SPA    (app/ + shared/ + features/ slice — see below)
+docs/ARCHITECTURE.md   # architecture reference
 ```
+
+## Architecture
+
+A **modular monolith** — one deployable unit, organized into bounded contexts so it
+stays readable and can later be split into services without rewrites.
+
+**Backend** (`backend/src`): `core/` holds cross-cutting building blocks
+(`errors`, `config`, `logger`, `createApp` bootstrap); `domains/<context>/`
+(auth, accounts, patients, prescriptions, pharmacist, drugs, files) each owns its
+route + service; shared services (`auditLog`, `inviteLinks`) and infra
+(`db/`, `auth/`, `middleware/`, `lib/`) live at the root. `createApp()` mounts the
+domain routers under `/api/<context>`.
+
+**Frontend** (`frontend/src`): `app/` (bootstrap + routes + guards), `shared/`
+(lib, components, styles — shared state & UI), and `features/<context>/pages`
+(co-located screens per bounded context, mirroring the backend domains).
+
+Cross-domain calls on both tiers go through the `packages/shared` Zod contract. See
+[`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) for the full layout, request
+lifecycle, error model, data-organization strategy, security invariants, and how
+to add a domain.
 
 ## Local development
 

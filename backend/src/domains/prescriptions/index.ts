@@ -1,0 +1,1 @@
+export { prescriptionsRouter } from './route';

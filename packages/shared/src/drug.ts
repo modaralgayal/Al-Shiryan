@@ -10,7 +10,8 @@ export const drugSchema = z.object({
 });
 export type Drug = z.infer<typeof drugSchema>;
 
-/** Autocomplete query — never free text into a prescription. */
+/** Autocomplete query — never free text into a prescription. An empty `q` returns
+ *  the full seeded list (used by list views to resolve drug names). */
 export const drugAutocompleteQuery = z.object({
-  q: z.string().min(1).max(100),
+  q: z.string().max(100),
 });

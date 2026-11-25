@@ -33,6 +33,20 @@ export async function createInvite(opts: {
 
 export type RedeemedInvite = { role: Role; email: string | null };
 
+/** Read-only peek at an invite's role/email — does NOT redeem it. Used by the
+ * register page to decide which professional-ID field to show. */
+export async function peekInvite(token: string): Promise<RedeemedInvite | null> {
+  const hash = hashToken(token);
+  const rows = await db
+    .select()
+    .from(inviteLinks)
+    .where(eq(inviteLinks.tokenHash, hash))
+    .limit(1);
+  const inv = rows[0];
+  if (!inv || inv.usedAt || inv.expiresAt.getTime() < Date.now()) return null;
+  return { role: inv.role, email: inv.email };
+}
+
 /** Single-use + expiring. Marks the invite used and returns its role. */
 export async function redeemInvite(token: string): Promise<RedeemedInvite> {
   const hash = hashToken(token);

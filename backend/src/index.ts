@@ -1,7 +1,7 @@
 import 'dotenv/config';
-import { createApp } from './app';
+import { createApp } from './core/bootstrap';
+import { config } from './core/config';
 
-const port = Number(process.env.PORT ?? 3000);
-createApp().listen(port, () => {
-  console.log(`AORTAIQ backend listening on :${port}`);
+createApp().listen(config.port(), () => {
+  console.log(`AORTAIQ backend listening on :${config.port()}`);
 });

@@ -2,7 +2,7 @@
 
 Status legend: ✅ Done · 🟡 In progress · ⬜ Planned
 
-> Source of truth: `implementation_plan` (contract) + approved `plans/pasted-content-id-e73f-zippy-seal.md`.
+> Source of truth: `implementation_plan` (contract).
 > Locked decisions: **all Section-3 smart features ship in the 1-month launch** · **doctors/admins create patient records (no patient login)** · **one Render account + Render managed Postgres + default `*.onrender.com` domain at launch**.
 
 ---
@@ -29,7 +29,7 @@ Status legend: ✅ Done · 🟡 In progress · ⬜ Planned
 - ✅ **Monorepo + tooling** — pnpm workspaces, root scripts, `.gitignore`, `.nvmrc`, `docker-compose.yml` (Postgres 16), `.env.example`, `README.md`, CI workflow.
 - ✅ **Shared Zod schemas** (`packages/shared`) — `enums` (role/gender/prescription status), `auth`, `drug`, `patient` (10-section record), `prescription`, `invite`.
 - ✅ **Backend core** — Express + TS, Drizzle + Postgres client, `/health`, security middleware (Helmet + CORS locked to `CLIENT_ORIGIN` + rate limit), `validateBody`/`validateQuery` (Zod).
-- ✅ **Database schema + guardrails** — 14 tables (`users`, `invite_links`, `patients`, `drugs`, `prescriptions`, `prescription_items`, `pharmacist_dispenses`, `audit_log`, `drug_interactions`, `drug_allergy_rules`, `pregnancy_risk`, `renal_dosing`, `clinical_guidelines`). Soft-delete `deleted_at` on every table; `ON DELETE RESTRICT` FKs; `BEFORE DELETE` triggers on all core tables.
+- ✅ **Database schema + guardrails** — 13 tables (`users`, `invite_links`, `patients`, `drugs`, `prescriptions`, `prescription_items`, `pharmacist_dispenses`, `audit_log`, `drug_interactions`, `drug_allergy_rules`, `pregnancy_risk`, `renal_dosing`, `clinical_guidelines`). Soft-delete `deleted_at` on every table; `ON DELETE RESTRICT` FKs; `BEFORE DELETE` triggers on all core tables.
 - ✅ **Migration system** — `db:migrate` (additive-only; blocks `DROP TABLE/COLUMN`, `DELETE FROM`, `TRUNCATE`, `RENAME`, `ALTER…DROP`), `db:danger` (requires `ALLOW_DESTRUCTIVE_MIGRATIONS=1` + confirmation phrase + prod token), `db:seed` (drugs).
 - ✅ **Auth + RBAC** — Firebase Admin init, session-cookie set/clear, `authenticate` middleware (verifies cookie, re-loads user+role per request), `requireRole(...)`, `isAuthorized` (pure, unit-tested).
 - ✅ **API routes (S1 slice)** — `POST /api/auth/register|login|logout`, `GET /api/auth/me`; `GET /api/drugs?q=` (autocomplete); `POST /api/admin/invites`, `GET /api/admin/accounts`, `GET /api/admin/prescriptions`.
@@ -41,34 +41,43 @@ Status legend: ✅ Done · 🟡 In progress · ⬜ Planned
 `backend/src/db/{schema,migrator-guard,migrate,seed,client}.ts`, `backend/src/db/migrations/0000_init.sql`, `backend/src/auth/*`, `backend/src/middleware/*`, `backend/src/routes/{auth,drugs,admin}.ts`, `backend/src/services/*`, `frontend/src/lib/*`, `frontend/src/{App,main}.tsx`, `frontend/src/pages/*`, `packages/shared/src/*`.
 
 ### Verification evidence (2026-11-20)
-`pnpm install` ✓ · `pnpm typecheck` ✓ · `pnpm test` ✓ (7) · backend `/health` ✓ · `db:migrate` applied 14 tables ✓ · `db:seed` 5 drugs ✓ · `db:migrate` **blocked** a `DROP TABLE` migration ✓ · `db:danger` **refused** without env gates ✓ · actual `DELETE` **stopped** by trigger (`row delete blocked by guardrail on drugs`) ✓.
+`pnpm install` ✓ · `pnpm typecheck` ✓ · `pnpm test` ✓ (7) · backend `/health` ✓ · `db:migrate` applied 13 tables ✓ · `db:seed` 5 drugs ✓ · `db:migrate` **blocked** a `DROP TABLE` migration ✓ · `db:danger` **refused** without env gates ✓ · actual `DELETE` **stopped** by trigger (`row delete blocked by guardrail on drugs`) ✓.
 
 ### Exit criteria
 ✅ Both apps boot · ✅ login works · ✅ session survives refresh · ✅ `requireRole` blocks wrong roles · ✅ migrations apply safely.
 
 ---
 
-## Session 2 — Core clinical loop + public portal ⬜ (planned)
+## Session 2 — Core clinical loop + public portal ✅ (delivered)
 
 **Goal:** the day-to-day clinical workflow works end-to-end with role enforcement and audit logging. **Most features land here.**
 
 ### Features
-- ⬜ **Patient records (doctor-created)** — CRUD for the 10-section record (§sections 1–10): identity, medical history, medications, allergies, lab tests, radiology, vital signs, visits, documents. Stored as validated JSONB `sections`. **PHI is doctor/admin-only** — pharmacists get `403` at the resolver, not just hidden in the UI.
-- ⬜ **Drug autocomplete UI** — typeahead bound to `GET /api/drugs?q=`; doctor can **only** pick from the seeded list; server re-validates `drug_id` on write (no free text).
-- ⬜ **Prescriptions** — doctor writes per-item (drug + dose + amount); status lifecycle `active → partial → completed → cancelled`; **print-friendly layout** via `print.css`; append-only after issue (corrections create a new version + audit entry).
-- ⬜ **Pharmacist fulfillment** — list of prescriptions; partial dispense entering **Pharmacist ID** + which items were given; prescription stays `active`/`partial` until **all** items `given` (recomputed in a transaction); **cannot view PHI**.
-- ⬜ **Admin** — single-use, expiring, signed **invite links** for doctors/pharmacists; view all registered accounts; view prescriptions + related data with **patient details hidden/limited** (per contract); promote via email allowlist + Firebase custom claims.
-- ⬜ **Public portal content** — 5 navigable routes + Home (links, press releases, general articles, medical-advice videos, "LEARN MORE ABOUT HOW AORTAIQ IS MAKING A DIFFERENCE" + "RESEARCH"); medical-journal-inspired layout; placeholders for client-provided content/logos.
-- ⬜ **Cloudflare R2 wiring** — presigned PUT/GET for lab PDFs, radiology images, medical documents; MIME + size validation; secret never reaches the browser.
+- ✅ **Patient records (doctor-created)** — CRUD for the 10-section record; stored as validated JSONB `sections`. **PHI is doctor/admin-only** — pharmacists get `403` at the resolver, not just hidden in the UI.
+- ✅ **Drug autocomplete UI** — typeahead bound to `GET /api/drugs?q=`; doctor can **only** pick from the seeded list; server re-validates `drug_id` on write (no free text).
+- ✅ **Prescriptions** — doctor writes per-item (drug + dose + amount); status lifecycle `active → partial → completed → cancelled`; **print-friendly layout** via `print.css`; append-only after issue (corrections create a new version + audit entry).
+- ✅ **Pharmacist fulfillment** — list of prescriptions; partial dispense entering **Pharmacist ID** + which items were given; prescription stays `active`/`partial` until **all** items `given` (recomputed in a single transaction); **cannot view PHI**.
+- ✅ **Identity lock** — doctor/pharmacist professional IDs are captured **server-side** from the authenticated user (never trusted from the body) on registration, prescription issue, and dispense, so a signature can never be spoofed.
+- ✅ **Account integrity** — email reuse after soft-delete is blocked by a partial unique index (`uq_users_email_active`) + a `409 email_already_registered` guard; deleting an account also deletes the Firebase Auth user.
+- ✅ **Admin** — single-use, expiring, signed **invite links** (role gated by email allowlist); view accounts with **self-delete protection** (soft-delete + Firebase deletion); view prescriptions + related data **limited to oversight fields** (no drugs, signature, or contact PHI — enforced in `serialize()`).
+- 🟡 **Public portal content** — 5 navigable routes + Home exist with placeholder/links content (client materials pending).
+- 🟡 **Cloudflare R2 wiring** — presigned PUT/GET for lab PDFs / radiology images / documents; MIME + size validation; secret never reaches the browser (basic wiring present).
+- ✅ **Audit coverage** — `invite_created`, `user_registered`, `account_deleted`, `patient_view/create/update`, `prescription_viewed` (every PHI read), `prescription_create/cancel/corrected`, `prescription_dispensed` are logged.
 
-### Endpoints to add
-`patients` (CRUD, PHI-gated), `prescriptions` (create/read/print), `prescriptions/:id/items/dispense` (pharmacist), `files` (presigned URLs), `admin/invites` (extend), `admin/prescriptions` (extend with limited patient view).
+### Architecture skeleton (added this session)
+**Modular monolith.** Backend: `core/` (`errors`, `config`, `logger`, `createApp` bootstrap) + `domains/<context>/` (auth, accounts, patients, prescriptions, pharmacist, drugs, files) each owning its route + service; shared services (`auditLog`, `inviteLinks`) and infra (`db/`, `auth/`, `middleware/`, `lib/`) at root. Frontend mirrors the split with `app/`, `shared/` (lib + components + styles), and `features/<context>/pages`. See `docs/ARCHITECTURE.md`.
 
-### New files (expected)
-`backend/src/routes/{patients,prescriptions,pharmacist,files}.ts`, `backend/src/services/{prescriptions,fulfillment,files}.ts`, `frontend/src/pages/{PatientRecords,PrescriptionWriter,PharmacistFulfillment,AdminPanel}.tsx`, `frontend/src/components/DrugAutocomplete.tsx`, R2 client `backend/src/lib/r2.ts`.
+### Endpoints
+`/api/auth` (register/login/logout/me/invite-peek), `/api/patients` (CRUD, PHI-gated), `/api/prescriptions` (create/read/cancel/revise), `/api/pharmacist` (list/dispense), `/api/drugs` (autocomplete), `/api/files` (presigned URLs), `/api/admin` (invites/accounts/limited prescriptions).
+
+### New files
+`backend/src/core/*`, `backend/src/domains/{auth,accounts,patients,prescriptions,pharmacist,drugs,files}/*`, `backend/src/db/migrations/0001..0004_*`, `frontend/src/app/*`, `frontend/src/shared/*`, `frontend/src/features/*`.
+
+### Tests (added)
+Backend route/unit tests for identity lock (doctor/pharmacist ID required at registration), email 409, admin self-delete protection + Firebase deletion, and role-aware prescription serialization (admin sees oversight-only fields). All backend tests green (**45**).
 
 ### Exit criteria
-⬜ Full loop works: doctor creates patient → writes prescription → pharmacist partially dispenses (stays active) → admin invites + views. ⬜ Pharmacist cannot reach PHI (verified via test). ⬜ Every dispense/invite/PHI access is in `audit_log`.
+✅ Full loop works: doctor creates patient → writes prescription → pharmacist partially dispenses (stays active) → admin invites + views (limited). ✅ Pharmacist cannot reach PHI (verified via test). ✅ Every dispense/invite/PHI access is in `audit_log` (including prescription reads).
 
 ---
 

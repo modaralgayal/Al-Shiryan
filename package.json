@@ -8,13 +8,14 @@
     "node": ">=20"
   },
   "scripts": {
-    "dev": "pnpm -r --parallel dev",
+    "dev": "pnpm -r --parallel --if-present dev",
     "build": "pnpm -r --if-present build",
     "typecheck": "pnpm -r --if-present typecheck",
     "lint": "pnpm -r --if-present lint",
     "test": "pnpm --filter @aorta-iq/backend test && pnpm --filter @aorta-iq/frontend test",
     "db:generate": "pnpm --filter @aorta-iq/backend db:generate",
     "db:migrate": "pnpm --filter @aorta-iq/backend db:migrate",
+    "db:seed": "pnpm --filter @aorta-iq/backend db:seed",
     "db:danger": "pnpm --filter @aorta-iq/backend db:danger"
   }
 }

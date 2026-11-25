@@ -8,7 +8,18 @@ import { getAuth, type Auth } from 'firebase-admin/auth';
  */
 export const firebaseEnabled: boolean = (() => {
   const raw = process.env.FIREBASE_SERVICE_ACCOUNT_JSON?.trim();
-  return !!raw && raw !== '' && raw !== '{}';
+  if (!raw || raw === '{}') return false;
+  try {
+    JSON.parse(raw);
+    return true;
+  } catch {
+    // Present but unparseable (e.g. pasted multi-line into .env) — disable
+    // rather than crash login with a cryptic JSON.parse error.
+    console.warn(
+      '[firebase] FIREBASE_SERVICE_ACCOUNT_JSON is present but not valid JSON — Firebase disabled. Auth will return 503.',
+    );
+    return false;
+  }
 })();
 
 let app: App | null = null;
@@ -48,4 +59,11 @@ export async function setCustomUserClaims(uid: string, claims: Record<string, un
 
 export async function revokeRefreshTokens(uid: string) {
   return auth().revokeRefreshTokens(uid);
+}
+
+/** Permanently removes the Firebase Auth user. Called when an admin deletes an
+ * account so the email is freed and can be re-registered (otherwise Firebase
+ * returns auth/email-already-in-use on a subsequent signup). */
+export async function deleteUser(uid: string) {
+  return auth().deleteUser(uid);
 }
