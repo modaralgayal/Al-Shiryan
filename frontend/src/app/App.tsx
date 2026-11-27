@@ -6,7 +6,7 @@ import Login from '../features/auth/pages/Login';
 import Register from '../features/auth/pages/Register';
 import Portals from '../features/portal/pages/Portals';
 import Journals from '../features/portal/pages/Journals';
-import MedicalLibrary from '../features/portal/pages/MedicalLibrary';
+import EducationPortal from '../features/portal/pages/EducationPortal';
 import Authorities from '../features/portal/pages/Authorities';
 import Events from '../features/portal/pages/Events';
 import PatientRecords from '../features/patients/pages/PatientRecords';
@@ -25,7 +25,8 @@ export default function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/portals" element={<Portals />} />
         <Route path="/journals" element={<Journals />} />
-        <Route path="/medical-library" element={<MedicalLibrary />} />
+        <Route path="/education-portal" element={<EducationPortal />} />
+        <Route path="/medical-library" element={<Navigate to="/education-portal" replace />} />
         <Route path="/authorities" element={<Authorities />} />
         <Route path="/events" element={<Events />} />
         {/* Role-gated app sections (S2/S3 features mount here) */}

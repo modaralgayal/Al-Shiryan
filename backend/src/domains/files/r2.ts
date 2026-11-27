@@ -50,6 +50,7 @@ export function validateUpload(
   fileName: string,
   contentType: string,
   size: number,
+  ownerId = 'anon',
 ): UploadCheck {
   if (!ALLOWED_CONTENT_TYPES.has(contentType)) return { ok: false, error: 'unsupported_content_type' };
   if (size > MAX_UPLOAD_BYTES) return { ok: false, error: 'file_too_large' };
@@ -57,8 +58,20 @@ export function validateUpload(
     .replace(/[^a-zA-Z0-9._-]/g, '_')
     .replace(/\.{2,}/g, '_') // collapse ".." runs — no path traversal in the key
     .slice(-120);
-  const key = `uploads/${Date.now()}-${randomUUID()}-${safe}`;
+  const owner = ownerId.replace(/[^a-zA-Z0-9-]/g, '');
+  const key = `uploads/${owner}/${Date.now()}-${randomUUID()}-${safe}`;
   return { ok: true, key, contentType };
+}
+
+/**
+ * Pure: may this user download this key? Only objects under `uploads/<own id>/`
+ * (admins: any `uploads/` object). Everything else (e.g. `library/`) is refused,
+ * as is any key containing path-traversal segments.
+ */
+export function canDownloadKey(key: string, userId: string, role: string): boolean {
+  if (!key.startsWith('uploads/') || key.includes('..') || key.includes('//')) return false;
+  if (role === 'admin') return true;
+  return key.startsWith(`uploads/${userId}/`);
 }
 
 export async function presignPut(key: string, contentType: string): Promise<string> {
@@ -71,10 +84,19 @@ export async function presignPut(key: string, contentType: string): Promise<stri
   return url;
 }
 
-export async function presignGet(key: string): Promise<string> {
+export async function presignGet(key: string, opts: { inlinePdf?: boolean; expiresIn?: number } = {}): Promise<string> {
   if (mockMode()) return `https://mock.r2.local/${key}?op=get`;
-  const url = await getSignedUrl(s3Client(), new GetObjectCommand({ Bucket: process.env.R2_BUCKET!, Key: key }), {
-    expiresIn: 600,
-  });
+  const url = await getSignedUrl(
+    s3Client(),
+    new GetObjectCommand({
+      Bucket: process.env.R2_BUCKET!,
+      Key: key,
+      // Open in the browser tab instead of downloading.
+      ...(opts.inlinePdf
+        ? { ResponseContentType: 'application/pdf', ResponseContentDisposition: 'inline' }
+        : {}),
+    }),
+    { expiresIn: opts.expiresIn ?? 600 },
+  );
   return url;
 }

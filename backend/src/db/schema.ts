@@ -88,7 +88,9 @@ export const drugs = pgTable('drugs', {
   id: uuid('id').primaryKey().defaultRandom(),
   name: text('name').notNull(),
   form: text('form').notNull(),
-  strength: text('strength').notNull(),
+  strength: text('strength').notNull().default(''),
+  pack: text('pack'), // full pack text from the market list, e.g. "TAB 100 MG 30'S"
+  molecule: text('molecule'), // active ingredient(s), searchable
   ...lifecycle,
 });
 

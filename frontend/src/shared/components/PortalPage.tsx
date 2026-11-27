@@ -12,7 +12,7 @@ export function PortalPage({
   return (
     <div>
       <h1 className="text-2xl font-bold">{t(titleKey)}</h1>
-      <p className="mt-2 text-slate-500">{t('portalSubtitle')}</p>
+      {!children && <p className="mt-2 text-slate-500">{t('portalSubtitle')}</p>}
       <div className="mt-6">{children}</div>
     </div>
   );

@@ -5,7 +5,9 @@ export const drugSchema = z.object({
   id: z.string().uuid(),
   name: z.string().min(1),
   form: z.string().min(1),
-  strength: z.string().min(1),
+  strength: z.string(), // may be empty when the pack states none
+  pack: z.string().nullable().optional(),
+  molecule: z.string().nullable().optional(),
   createdAt: z.string(),
 });
 export type Drug = z.infer<typeof drugSchema>;

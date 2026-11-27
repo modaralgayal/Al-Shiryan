@@ -67,7 +67,7 @@ export function serialize(
 export async function createPrescription(input: PrescriptionCreate, doctorId: string): Promise<Prescription> {
   // Server is the authority: re-validate every drug_id exists in the seeded list.
   const ids = input.items.map((i) => i.drugId);
-  const found = await db.select({ id: drugs.id }).from(drugs).where(inArray(drugs.id, ids));
+  const found = await db.select({ id: drugs.id }).from(drugs).where(and(inArray(drugs.id, ids), isNull(drugs.deletedAt)));
   if (!drugsAccountedFor(found, ids)) {
     throw Object.assign(new Error('unknown_drug'), { statusCode: 400 });
   }

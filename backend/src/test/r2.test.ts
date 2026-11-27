@@ -1,5 +1,18 @@
 import { describe, it, expect } from 'vitest';
-import { validateUpload, MAX_UPLOAD_BYTES } from '../domains/files/r2';
+import { validateUpload, canDownloadKey, MAX_UPLOAD_BYTES } from '../domains/files/r2';
+
+describe('canDownloadKey', () => {
+  it('lets a user fetch their own upload only', () => {
+    const r = validateUpload('a.pdf', 'application/pdf', 1, 'user-1');
+    expect(r.ok && canDownloadKey(r.key, 'user-1', 'doctor')).toBe(true);
+    expect(r.ok && canDownloadKey(r.key, 'user-2', 'doctor')).toBe(false);
+  });
+  it('lets admins fetch any upload but never library or traversal keys', () => {
+    expect(canDownloadKey('uploads/user-1/x.pdf', 'adm', 'admin')).toBe(true);
+    expect(canDownloadKey('library/book.pdf', 'adm', 'admin')).toBe(false);
+    expect(canDownloadKey('uploads/../library/book.pdf', 'adm', 'admin')).toBe(false);
+  });
+});
 
 describe('validateUpload', () => {
   it('accepts an allowed PDF and returns a safe key', () => {

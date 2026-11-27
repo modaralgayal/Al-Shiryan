@@ -44,7 +44,9 @@ export function DrugAutocomplete({
                   setOpen(false);
                 }}
               >
-                {d.name} <span className="text-slate-500">({d.form} {d.strength})</span>
+                {d.name}{' '}
+                <span className="text-slate-500">({d.pack || `${d.form} ${d.strength}`.trim()})</span>
+                {d.molecule && <span className="block text-xs text-slate-400">{d.molecule}</span>}
               </button>
             </li>
           ))}

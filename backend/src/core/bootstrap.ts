@@ -9,6 +9,7 @@ import { patientsRouter } from '../domains/patients';
 import { prescriptionsRouter } from '../domains/prescriptions';
 import { pharmacistRouter } from '../domains/pharmacist';
 import { filesRouter } from '../domains/files';
+import { libraryRouter } from '../domains/library';
 
 /**
  * Composes the Express app. Each domain owns its router (exported from its
@@ -30,6 +31,7 @@ export function createApp() {
   app.use('/api/prescriptions', prescriptionsRouter);
   app.use('/api/pharmacist', pharmacistRouter);
   app.use('/api/files', filesRouter);
+  app.use('/api/library', libraryRouter);
 
   app.use(errorHandler);
   return app;
